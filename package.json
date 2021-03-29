@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"tsc -w\" \"nodemon ./dist/index.js --ignore './videos'\""
+    "start-dev": "concurrently \"tsc -w\" \"nodemon ./dist/index.js --ignore './videos'\"",
+    "start": "sudo concurrently \"sudo tsc -w\" \"sudo nodemon ./dist/index.js --ignore './videos'\""
   },
   "author": "",
   "license": "ISC",
