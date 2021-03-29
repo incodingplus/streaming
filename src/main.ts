@@ -66,7 +66,7 @@ app.use('/videodata', (req, res, next) => {
             });
         }  
     } else {
-        res.redirect('./error');
+        res.redirect('/video/error');
     }
 });
 tokens.add('ca2e3b98d61c6c924bbfb20dacbb0358ac64827925653958d895d9f73c0d9454');
@@ -135,10 +135,10 @@ app.post('/view', async (req, res) => {
                 return;
             }
         }catch(err){
-            res.redirect('./error');
+            res.redirect('/video/error');
         }
     }
-    res.redirect('./error');
+    res.redirect('/video/error');
 });
 
 
