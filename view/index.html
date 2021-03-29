@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>업로드 페이지 테스트</title>
+    <style>
+        form{
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    예) /폴더1/폴더2/폴더3...<br>
+    <input type="text" name="" id="aaa">
+    <button id="file">파일 선택</button><br>
+    토큰 : <input type="text" id="token"><br>
+    주소 : <input type="text" id="url"><br>
+    <button id="view">이 주소로 열기</button>
+    <form name="frmData" id="frmData" method="post" action="/video/view">
+        <input type="hidden" name="token"/>
+        <input type="hidden" name="url"/>
+    </form>
+    <script>
+        const button = document.querySelector('#file');
+        const aaa = document.querySelector('#aaa');
+        const url = document.querySelector('#url');
+        const token = document.querySelector('#token');
+        const view = document.querySelector('#view');
+        const form = document.querySelector('#frmData');
+        button.addEventListener('click', async e => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.addEventListener('change', async e => {
+                if(aaa.value.match(/^\/.+?(?<!\/)$/)){
+                    const url = `${aaa.value}/${input.files[0].name}`
+                    const res = await fetch(`${location.pathname}/upload?token=admin&url=${url}`, {
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/octet-stream'
+                        },
+                        body:input.files[0]
+                    });
+                    console.log(await res.text());
+                } else {
+                    alert('url 형식 지키기');
+                }
+            }, {once:true});
+            input.click();
+        });
+
+        view.addEventListener('click', e => {
+            const name = `video ${Date.now()}`;
+            window.open('', name);
+            document.querySelector('input[name="token"]').value = token.value;
+            document.querySelector('input[name="url"]').value = url.value;
+            form.target = name;
+            form.submit();
+        });
+    </script>
+</body>
+</html>
