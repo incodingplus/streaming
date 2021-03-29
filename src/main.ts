@@ -106,25 +106,36 @@ app.post('/view', async (req, res) => {
         const token = req.body.token as string;
         const url = req.body.url as string;
         console.log(url, token);
-        const resp = await fetch(`${checkurl}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url)}`);
-        const data = await resp.json();
-        if(data.data && data.success){
-            const hash = makeHash(token, decodeURIComponent(url));
-            let str = await fs.promises.readFile('./view/video.html', { encoding:'utf-8' });
-            str = str.replace('\"{{url}}\"', `\"/video/videodata/${token}/${hash}${url}/index.m3u8\"`);
-            str = str.replace('\"{{token}}\"', `\"${token}\"`);
-            const dir = await fs.promises.readdir(`./videos${url}`);
-            const obj:HowLong = {
-                token,
-                set:new Set<string>(),
-                length:dir.length - 2,
-                size:0,
-                time:setTimeout(historyDelete(token), 10000),
-                url: url.slice(1)
+        try{
+            let data = {
+                data:true,
+                success:true
             };
-            history.set(token, obj);
-            res.end(str);
-            return;
+            if(token !== 'admin'){
+                const resp = await fetch(`${checkurl}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url)}`);
+                data = await resp.json();
+            }
+            
+            if(data.data && data.success){
+                const hash = makeHash(token, decodeURIComponent(url));
+                let str = await fs.promises.readFile('./view/video.html', { encoding:'utf-8' });
+                str = str.replace('\"{{url}}\"', `\"https://in-coding.kro.kr/video/videodata/${token}/${hash}${url}/index.m3u8\"`);
+                str = str.replace('\"{{token}}\"', `\"${token}\"`);
+                const dir = await fs.promises.readdir(`./videos${url}`);
+                const obj:HowLong = {
+                    token,
+                    set:new Set<string>(),
+                    length:dir.length - 2,
+                    size:0,
+                    time:setTimeout(historyDelete(token), 10000),
+                    url: url.slice(1)
+                };
+                history.set(token, obj);
+                res.end(str);
+                return;
+            }
+        }catch(err){
+            res.redirect('./error');
         }
     }
     res.redirect('./error');
