@@ -34,7 +34,7 @@
             input.type = 'file';
             input.addEventListener('change', async e => {
                 if(aaa.value.match(/^\/.+?(?<!\/)$/)){
-                    const url = `${aaa.value}/${input.files[0].name}`
+                    const url = `${aaa.value}`;
                     const res = await fetch(`${location.pathname}/upload?token=admin&url=${url}`, {
                         method:'POST',
                         headers:{
