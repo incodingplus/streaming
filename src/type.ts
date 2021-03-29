@@ -4,4 +4,5 @@ export interface HowLong{
     length:number;
     size:number;
     time:NodeJS.Timeout|null;
+    url:string;
 };

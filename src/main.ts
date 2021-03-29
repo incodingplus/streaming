@@ -119,7 +119,8 @@ app.post('/view', async (req, res) => {
                 set:new Set<string>(),
                 length:dir.length - 2,
                 size:0,
-                time:setTimeout(historyDelete(token), 10000)
+                time:setTimeout(historyDelete(token), 10000),
+                url: url.slice(1)
             };
             history.set(token, obj);
             res.end(str);
@@ -187,6 +188,7 @@ app.post('/upload', async (req, res) => {
             setHls(url);
         });
     } else {
+        res.status(404);
         res.end('bad');
     }
 });
