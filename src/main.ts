@@ -136,6 +136,7 @@ app.post('/view', async (req, res) => {
             }
         }catch(err){
             res.redirect('/video/error');
+            return;
         }
     }
     res.redirect('/video/error');
