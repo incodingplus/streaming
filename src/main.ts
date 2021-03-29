@@ -107,8 +107,8 @@ app.post('/view', async (req, res) => {
         const url = req.body.url as string;
         console.log(url, token);
         const resp = await fetch(`${checkurl}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url)}`);
-        const data = await resp.text();
-        if(data === 'good'){
+        const data = await resp.json();
+        if(data.data && data.success){
             const hash = makeHash(token, decodeURIComponent(url));
             let str = await fs.promises.readFile('./view/video.html', { encoding:'utf-8' });
             str = str.replace('\"{{url}}\"', `\"/video/videodata/${token}/${hash}${url}/index.m3u8\"`);
@@ -158,6 +158,7 @@ app.get('/uploadmessage', (req, res) => {
     setTimeout(() => {
         tokens.delete(hash);
     }, 5 * 60 * 1000);
+    res.end('success');
 });
 
 app.post('/upload', async (req, res) => {

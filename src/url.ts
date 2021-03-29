@@ -1,2 +1,2 @@
-export const checkurl = 'http://localhost:5000/video/test/check';
-export const howlong = 'http://localhost:5000/video/test/howlong';
+export const checkurl = 'https://dev-api.in-coding.com/video/check';
+export const howlong = 'https://dev-api.in-coding.com/video/howlong';
