@@ -1,8 +1,8 @@
 export interface HowLong{
-    token:string;
+    user_id:string;
     set:Set<string>;
     length:number;
     size:number;
     time:NodeJS.Timeout|null;
-    url:string;
+    material_id:string;
 };

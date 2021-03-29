@@ -123,12 +123,12 @@ app.post('/view', async (req, res) => {
                 str = str.replace('\"{{token}}\"', `\"${token}\"`);
                 const dir = await fs.promises.readdir(`./videos${url}`);
                 const obj:HowLong = {
-                    token,
+                    user_id:token,
                     set:new Set<string>(),
                     length:dir.length - 2,
                     size:0,
                     time:setTimeout(historyDelete(token), 10000),
-                    url: url.slice(1)
+                    material_id: url.slice(1)
                 };
                 history.set(token, obj);
                 res.end(str);
@@ -147,7 +147,7 @@ app.get('/keepalive', (req, res) => {
         const obj = history.get(req.query.token as string);
         if(obj){
             clearTimeout(obj.time);
-            obj.time = setTimeout(historyDelete(obj.token), 10000);
+            obj.time = setTimeout(historyDelete(obj.user_id), 10000);
             res.status(200);
             res.end('good');
         } else {
