@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { HowLong } from './type.js';
-import { checkurl, howlong } from './url.js';
+import { check_url, dev_check_url, howlong } from './url.js';
 
 const app = express.Router();
 
@@ -112,8 +112,13 @@ app.post('/view', async (req, res) => {
                 success:true
             };
             if(token !== 'admin'){
-                const resp = await fetch(`${checkurl}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url)}`);
-                data = await resp.json();
+                if(req.body.dev === 'dev'){
+                    const resp = await fetch(`${dev_check_url}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url.slice(1))}`);
+                    data = await resp.json();
+                } else {
+                    const resp = await fetch(`${check_url}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url.slice(1))}`);
+                    data = await resp.json();
+                }
             }
             
             if(data.data && data.success){
