@@ -35,7 +35,7 @@
             input.addEventListener('change', async e => {
                 if(aaa.value.match(/^\/.+?(?<!\/)$/)){
                     const url = `${aaa.value}`;
-                    const res = await fetch(`${location.pathname}/upload?token=admin&url=${url}`, {
+                    const res = await fetch(`${location.origin}/video/upload?token=admin&url=${url}`, {
                         method:'POST',
                         headers:{
                             'Content-Type':'application/octet-stream'
