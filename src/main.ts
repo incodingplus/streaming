@@ -144,8 +144,10 @@ app.use('/videodata', (req, res, next) => {
         const hash = makeHash(token, url);
         if(hash === arr[2]){
             const name = decodeURIComponent(arr.slice(-1)[0]);
-            const obj = history.get(token);
-            obj.set.add(name);
+            if(history.has(token)){
+                const obj = history.get(token);
+                obj.set.add(name);
+            }
             res.sendFile(name, {
                 root:`./videos${url}`
             });
