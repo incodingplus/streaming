@@ -141,7 +141,7 @@ app.use('/videodata', (req, res, next) => {
         const arr = req.path.split('/');
         const token = arr[1];
         const url = decodeURIComponent(`/${arr.slice(3, -1).join('/')}`);
-        const hash = makeHash(token, url);
+        const hash = makeHash(token, url, );
         if(hash === arr[2]){
             const name = decodeURIComponent(arr.slice(-1)[0]);
             const obj = history.get(token);
@@ -282,58 +282,65 @@ app.get('/uploadmessage', (req, res) => {
 });
 
 app.get('/get', async (req, res) => {
-    const tk = req.query.token as string;
-    const hash = makeHash(tk);
-    if(tokens.has(hash)){
-        const obj = {
-            처리중:[],
-            목록:[],
-        };
-        let start = Number(req.query.start);
-        let limit = Number(req.query.limit);
-        let isall = Number(req.query.isall);
-        if(isNaN(start)){
-            start = 0;
-        }
-        if(isNaN(limit)){
-            limit = Infinity;
-        }
-        if(isNaN(isall) || isall > 2){
-            isall = 0;
-        }
-        const dir = await fs.promises.readdir(`./videos`);
-        let k = 0;
-        const arr = ['처리중', '목록'];
-        for(let i = start; i < dir.length; i++){
-            if(isall === 1 && dir[i].search(/\.temp$/) > -1 || isall === 2 && dir[i].search(/\.temp$/) === -1){
-                continue;
+    if(req.query.token && req.query.time){
+        const tk = req.query.token as string;
+        const time = req.query.time as string;
+        const hash = makeHash(tk, time);
+        if(tokens.has(hash)){
+            const obj = {
+                처리중:[],
+                목록:[],
+            };
+            let start = Number(req.query.start);
+            let limit = Number(req.query.limit);
+            let isall = Number(req.query.isall);
+            if(isNaN(start)){
+                start = 0;
             }
-            k++;
-            obj[arr[+!(dir[i].search(/\.temp/) + 1)]].push(dir[i]);
-            if(limit <= k){
-                break;
+            if(isNaN(limit)){
+                limit = Infinity;
             }
+            if(isNaN(isall) || isall > 2){
+                isall = 0;
+            }
+            const dir = await fs.promises.readdir(`./videos`);
+            let k = 0;
+            const arr = ['처리중', '목록'];
+            for(let i = start; i < dir.length; i++){
+                if(isall === 1 && dir[i].search(/\.temp$/) > -1 || isall === 2 && dir[i].search(/\.temp$/) === -1){
+                    continue;
+                }
+                k++;
+                obj[arr[+!(dir[i].search(/\.temp/) + 1)]].push(dir[i]);
+                if(limit <= k){
+                    break;
+                }
+            }
+            res.json(obj);
+            return;
         }
-        res.json(obj);
-        return;
     }
     res.status(404);
     res.end('bad');
 })
 
 app.get('/delete', async (req, res) => {
-    const tk = req.query.token as string;
-    const hash = makeHash(tk);
-    if(tokens.has(hash) && req.query.url && (req.query.url as string).search(/\.temp$/) === -1){
-        const url = `./videos${req.query.url as string}`;
-        try{
-            await fs.promises.stat(url);
-            await deleteAll(url);
-            await fs.promises.rmdir(url);
-        } catch(err){
-            console.log(err);
-            res.status(404);
-            res.end('bad');
+    if(req.query.token && req.query.time && req.query.url){
+        const tk = req.query.token as string;
+        const time = req.query.time as string;
+        const raw = req.query.url as string;
+        const hash = makeHash(tk, time);
+        if(tokens.has(hash) && raw.search(/\.temp$/) === -1){
+            const url = `./videos${raw}`;
+            try{
+                await fs.promises.stat(url);
+                await deleteAll(url);
+                await fs.promises.rmdir(url);
+                res.end('good');
+                return;
+            } catch(err){
+                console.log(err);
+            }
         }
     }
     res.status(404);
@@ -341,44 +348,51 @@ app.get('/delete', async (req, res) => {
 });
 
 app.post('/upload', async (req, res) => {
-    const tk = req.query.token as string;
-    const hash = makeHash(tk);
-    if(tokens.has(hash) && req.query.url && (req.query.url as string).search(/\.temp$/) === -1){
-        const url = `./videos${req.query.url as string}`;
-        const arr = url.split('/');
-        for(let i = 1; i <= arr.length; i++){
-            const temp = arr.slice(0, i).join('/');
-            try{
-                await fs.promises.stat(temp);
-            } catch(err){
-                await fs.promises.mkdir(temp);
+    if(req.query.token && req.query.url && req.query.time){
+        const tk = req.query.token as string;
+        const time = req.query.time as string;
+        const raw = req.query.url as string;
+        const hash = makeHash(tk, time);
+        if(tokens.has(hash) && raw.search(/\.temp$/) === -1){
+            const url = `./videos${raw}`;
+            const arr = url.split('/');
+            for(let i = 1; i <= arr.length; i++){
+                const temp = arr.slice(0, i).join('/');
+                try{
+                    await fs.promises.stat(temp);
+                } catch(err){
+                    await fs.promises.mkdir(temp);
+                }
             }
-        }
-        await deleteAll(url);
-        const find = workQ.indexOf(url);
-        if(find > -1){
-            try{
-                await fs.promises.stat(`${url}.temp`);
-                await deleteAll(`${url}.temp`);
-                await fs.promises.rmdir(`${url}.temp`);
-            } catch(err){
-                console.log('이상현상');
+            await deleteAll(url);
+            const find = workQ.indexOf(url);
+            if(find > -1){
+                try{
+                    await fs.promises.stat(`${url}.temp`);
+                    await deleteAll(`${url}.temp`);
+                    await fs.promises.rmdir(`${url}.temp`);
+                } catch(err){
+                    console.log('이상현상');
+                }
+                workQ.splice(find, 1);
             }
-            workQ.splice(find, 1);
-        }
-        if(isload === url){
+            if(isload === url){
+                res.status(404);
+                res.end('already encoding video');
+                await fs.promises.rmdir(url);
+                return;
+            }
+            await fs.promises.rename(url, `${url}.temp`);
+            const w = fs.createWriteStream(`${url}.temp/index.mp4`);
+            req.pipe(w);
+            req.on('end', () => {
+                res.send('upload success');
+                setHls(url);
+            });
+        } else {
             res.status(404);
-            res.end('already encoding video');
-            await fs.promises.rmdir(url);
-            return;
+            res.end('bad');
         }
-        await fs.promises.rename(url, `${url}.temp`);
-        const w = fs.createWriteStream(`${url}.temp/index.mp4`);
-        req.pipe(w);
-        req.on('end', () => {
-            res.send('upload success');
-            setHls(url);
-        });
     } else {
         res.status(404);
         res.end('bad');
