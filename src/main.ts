@@ -18,6 +18,41 @@ let isload = '';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
+const b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+
+const setToBase = (set:HowLong):string => {
+    const arr:number[] = Array(Math.floor(set.length / 6) * 6).fill(0);
+    const result:string[] = [];
+    for(let i of set.set){
+        const match = i.match(/^index(\d+)\.ts$/);
+        if(match){
+            arr[Number(match[1])] = 1;
+        }
+    }
+    let k:number = 0;
+    for(let i = 0; i < arr.length; i++){
+        k = 2 * k + arr[i];
+        if(i % 6 === 5){
+            result.push(b64[k]);
+            k = 0;
+        }
+    }
+    return result.join('');
+};
+
+const baseToBin = (str:string):number[] => {
+    const arr:number[] = [];
+    for(let i = 0; i < str.length; i++){
+        let num = b64.indexOf(str[i]);
+        for(let j = 0; j < 6; j++){
+            const n = num % 2;
+            arr[(i + 1) * 6 - j - 1] = n;
+            num = Math.floor(num / 2);
+        }
+    }
+    return arr;
+}
+
 const makeHash = (...token:string[]) => {
     const secret = 'rockman';
     return crypto.createHmac('sha256', secret).update(token.join('')).digest('hex');
@@ -58,7 +93,6 @@ const historyDelete = (token:string, dev:string = '') => async () => {
     if(history.has(token)){
         const a = history.get(token);
         history.delete(token);
-        a.size = a.set.size;
         clearTimeout(a.time);
         a.time = null;
         try{
@@ -66,11 +100,12 @@ const historyDelete = (token:string, dev:string = '') => async () => {
             if(dev === 'dev'){
                 request = dev_finish
             }
+            const status = setToBase(a);
             const obj:Finish = {
                 user_id: a.user_id,
                 material_id: a.material_id,
                 length: a.length,
-                size: a.size
+                status
             };
             await fetch(request, {
                 method:'POST',
@@ -199,7 +234,6 @@ app.post('/view', async (req, res) => {
                     user_id:token,
                     set:new Set<string>(),
                     length:dir.length - 2,
-                    size:0,
                     time:setTimeout(historyDelete(token, dev), 10000),
                     material_id: url.slice(1),
                     dev
