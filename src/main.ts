@@ -264,6 +264,7 @@ app.get('/get', async (req, res) => {
             }
         }
         res.json(obj);
+        return;
     }
     res.status(404);
     res.end('bad');
