@@ -68,6 +68,7 @@ const historyDelete = token => async () => {
                 },
                 body:JSON.stringify(a)
             });
+            console.log(a);
         } catch(err){
             console.error(err);
         }
