@@ -119,7 +119,8 @@ const historyDelete = (token:string, dev:string = '') => async () => {
                 user_id: a.user_id,
                 material_id: a.material_id,
                 length: a.length,
-                status
+                status,
+                ms: Date.now() - a.ms
             };
             await fetch(request, {
                 method:'POST',
@@ -128,7 +129,7 @@ const historyDelete = (token:string, dev:string = '') => async () => {
                 },
                 body:JSON.stringify(obj)
             });
-            console.log(a);
+            console.log(obj);
         } catch(err){
             console.error(err);
         }
@@ -252,6 +253,7 @@ app.post('/view', async (req, res) => {
                     length:dir.length - 2,
                     time:setTimeout(historyDelete(token, dev), 10000),
                     material_id: url.slice(1),
+                    ms:Date.now(),
                     dev
                 };
                 history.set(token, obj);

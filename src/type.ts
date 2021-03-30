@@ -5,6 +5,7 @@ export interface HowLong{
     time:NodeJS.Timeout|null;
     material_id:string;
     dev:string;
+    ms:number;
 };
 
 export interface Finish{
@@ -12,4 +13,5 @@ export interface Finish{
     material_id:string;
     status:string;
     length:number;
+    ms:number;
 };
