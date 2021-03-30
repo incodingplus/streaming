@@ -40,6 +40,20 @@ const setToBase = (set:HowLong):string => {
     return result.join('');
 };
 
+const binToBase = (arr:number[]):string => {
+    arr.push(...Array(6 - ((arr.length + 5) % 6 + 1)).fill(0));
+    const result:string[] = [];
+    let k:number = 0;
+    for(let i = 0; i < arr.length; i++){
+        k = 2 * k + arr[i];
+        if(i % 6 === 5){
+            result.push(b64[k]);
+            k = 0;
+        }
+    }
+    return result.join('');
+};
+
 const baseToBin = (str:string):number[] => {
     const arr:number[] = [];
     for(let i = 0; i < str.length; i++){
