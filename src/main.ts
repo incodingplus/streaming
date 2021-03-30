@@ -55,10 +55,11 @@ const main = async () => {
 };
 
 const historyDelete = (token:string, dev:string = '') => async () => {
-    const a = history.get(token);
-    history.delete(token);
-    if(a.set){
+    if(history.has(token)){
+        const a = history.get(token);
+        history.delete(token);
         a.size = a.set.size;
+        clearTimeout(a.time);
         a.time = null;
         try{
             let request = finish;
@@ -190,6 +191,10 @@ app.post('/view', async (req, res) => {
                 str = str.replace('\"{{url}}\"', `\"https://in-coding.kro.kr/video/videodata/${token}/${hash}${url}/index.m3u8\"`);
                 str = str.replace('\"{{token}}\"', `\"${token}\"`);
                 const dir = await fs.promises.readdir(`./videos${url}`);
+                console.log(`history 있는지 : ${history.has(token)}`);
+                if(history.has(token)){
+                    historyDelete(token, dev);
+                }
                 const obj:HowLong = {
                     user_id:token,
                     set:new Set<string>(),
