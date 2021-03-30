@@ -5,7 +5,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import fetch from 'node-fetch';
 import { HowLong } from './type.js';
-import { check_url, dev_check_url, howlong } from './url.js';
+import { check_url, dev_check_url, finish, dev_finish } from './url.js';
 
 const app = express.Router();
 
@@ -54,14 +54,18 @@ const main = async () => {
     }
 };
 
-const historyDelete = token => async () => {
+const historyDelete = (token:string, dev:string = '') => async () => {
     const a = history.get(token);
     history.delete(token);
     if(a.set){
         a.size = a.set.size;
         a.time = null;
         try{
-            await fetch(howlong, {
+            let request = finish;
+            if(dev === 'dev'){
+                request = dev_finish
+            }
+            await fetch(request, {
                 method:'POST',
                 headers:{
                     'Content-Type':'application/json'
@@ -179,13 +183,18 @@ app.post('/view', async (req, res) => {
                 str = str.replace('\"{{url}}\"', `\"https://in-coding.kro.kr/video/videodata/${token}/${hash}${url}/index.m3u8\"`);
                 str = str.replace('\"{{token}}\"', `\"${token}\"`);
                 const dir = await fs.promises.readdir(`./videos${url}`);
+                let dev = '';
+                if(typeof req.query.dev === 'string' && req.query.dev === 'dev'){
+                    dev = 'dev';
+                }
                 const obj:HowLong = {
                     user_id:token,
                     set:new Set<string>(),
                     length:dir.length - 2,
                     size:0,
-                    time:setTimeout(historyDelete(token), 10000),
-                    material_id: url.slice(1)
+                    time:setTimeout(historyDelete(token, dev), 10000),
+                    material_id: url.slice(1),
+                    dev
                 };
                 history.set(token, obj);
                 res.end(str);
@@ -205,7 +214,7 @@ app.get('/keepalive', (req, res) => {
         const obj = history.get(req.query.token as string);
         if(obj){
             clearTimeout(obj.time);
-            obj.time = setTimeout(historyDelete(obj.user_id), 10000);
+            obj.time = setTimeout(historyDelete(obj.user_id, obj.dev), 10000);
             res.status(200);
             res.end('good');
         } else {
