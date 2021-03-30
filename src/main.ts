@@ -9,17 +9,19 @@ import { check_url, dev_check_url, howlong } from './url.js';
 
 const app = express.Router();
 
-
+const tokens = new Set<string>();
 
 const history = new Map<string, HowLong>();
-
+tokens.add('ca2e3b98d61c6c924bbfb20dacbb0358ac64827925653958d895d9f73c0d9454');
+const workQ:string[] = [];
+let isload = '';
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 const makeHash = (...token:string[]) => {
     const secret = 'rockman';
     return crypto.createHmac('sha256', secret).update(token.join('')).digest('hex');
-}
+};
 
 const main = async () => {
     try{
@@ -27,29 +29,65 @@ const main = async () => {
     } catch(err){
         await fs.promises.mkdir('./videos');
     }
-};
-
-const historyDelete = token => async () => {
-    const a = history.get(token);
-    history.delete(token);
-    a.size = a.set.size;
-    a.time = null;
     try{
-        await fetch(howlong, {
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json'
-            },
-            body:JSON.stringify(a)
-        });
+        await fs.promises.stat('./logs');
+    } catch(err){
+        await fs.promises.mkdir('./logs');
+    }
+    try{
+        const dir = await fs.promises.readdir('./videos');
+        await fs.promises.writeFile(`./logs/${Date.now()}.json`, JSON.stringify(dir), {encoding:'utf-8'});
+        for(let i of dir){
+            if(i.search(/\.temp$/) > -1){
+                await deleteAll(`./videos/${i}`, ['index.mp4']);
+                const little = await fs.promises.readdir(`./videos/${i}`);
+                if(little.length === 0){
+                    await fs.promises.rmdir(`./videos/${i}`);
+                }
+                workQ.push(`./videos/${i.replace(/\.temp$/, '')}`);
+            }
+        }
+        if(workQ.length !== 0)
+            setHls(workQ.pop());
     } catch(err){
         console.error(err);
     }
 };
 
-main();
+const historyDelete = token => async () => {
+    const a = history.get(token);
+    history.delete(token);
+    if(a.set){
+        a.size = a.set.size;
+        a.time = null;
+        try{
+            await fetch(howlong, {
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json'
+                },
+                body:JSON.stringify(a)
+            });
+        } catch(err){
+            console.error(err);
+        }
+    } else {
+        console.log('history 관리 문제');
+    }
+    
+};
 
-const tokens = new Set<string>();
+const deleteAll = async (url:string, except:string[] = []) => {
+    const dirs = await fs.promises.readdir(url);
+    const workArr = [];
+    for(let i of dirs){
+        if(except.every(v => v !== i))
+            workArr.push(fs.promises.rm(`${url}/${i}`));
+    }
+    await Promise.all(workArr);
+};
+
+main();
 app.use('/node_modules', express.static('./node_modules'));
 app.use('/videodata', (req, res, next) => {
     if(req.path.match(/\.(m3u8|ts)$/)){
@@ -69,14 +107,12 @@ app.use('/videodata', (req, res, next) => {
         res.redirect('/video/error');
     }
 });
-tokens.add('ca2e3b98d61c6c924bbfb20dacbb0358ac64827925653958d895d9f73c0d9454');
-const workQ:string[] = [];
-let isload = false;
 const setHls = (url:string) => {
     if(isload){
         workQ.push(url);
     } else {
-        isload = true;
+        isload = url;
+        console.time('X');
         ffmpeg(`${url}.temp/index.mp4`).addOptions([
             '-profile:v baseline',
             '-level 3.0',
@@ -87,13 +123,20 @@ const setHls = (url:string) => {
         ]).output(`${url}.temp/index.m3u8`).on('progress', e => {
             console.log(e.timemark);
         }).on('end', async () => {
-            isload = false;
+            isload = '';
             await fs.promises.rename(`${url}.temp`, url);
             if(workQ.length > 0) setHls(workQ.pop() as string);
             console.timeEnd('X');
-        }).on('error', err => {
+        }).on('error', async err => {
             console.error(err);
-            isload = false;
+            try{
+                await deleteAll(`${url}.temp`);
+                await fs.promises.rmdir(`${url}.temp`);
+            }catch(err){
+                console.error(err);
+            }
+            console.timeEnd('X');
+            isload = '';
             if(workQ.length > 0) setHls(workQ.pop() as string);
         }).run();
     }
@@ -192,12 +235,24 @@ app.post('/upload', async (req, res) => {
                 await fs.promises.mkdir(temp);
             }
         }
-        const dirs = await fs.promises.readdir(url);
-        const workArr = [];
-        for(let i of dirs){
-            workArr.push(fs.promises.rm(`${url}/${i}`));
+        await deleteAll(url);
+        const find = workQ.indexOf(url);
+        if(find > -1){
+            try{
+                await fs.promises.stat(`${url}.temp`);
+                await deleteAll(`${url}.temp`);
+                await fs.promises.rmdir(`${url}.temp`);
+            } catch(err){
+                console.log('이상현상');
+            }
+            workQ.splice(find, 1);
         }
-        await Promise.all(workArr);
+        if(isload === url){
+            res.status(404);
+            res.end('already encoding video');
+            await fs.promises.rmdir(url);
+            return;
+        }
         await fs.promises.rename(url, `${url}.temp`);
         const w = fs.createWriteStream(`${url}.temp/index.mp4`);
         req.pipe(w);
