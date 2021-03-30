@@ -125,9 +125,17 @@ const setHls = (url:string) => {
             console.log(e.timemark);
         }).on('end', async () => {
             isload = '';
-            await fs.promises.rename(`${url}.temp`, url);
-            if(workQ.length > 0) setHls(workQ.pop() as string);
-            console.timeEnd('X');
+            try{
+                await fs.promises.stat(url);
+                await deleteAll(url);
+                await fs.promises.rmdir(url);
+            } catch(err){
+                
+            } finally{
+                await fs.promises.rename(`${url}.temp`, url);
+                console.timeEnd('X');
+                if(workQ.length > 0) setHls(workQ.pop() as string);
+            }
         }).on('error', async err => {
             console.error(err);
             try{
@@ -222,10 +230,68 @@ app.get('/uploadmessage', (req, res) => {
     res.end('success');
 });
 
-app.post('/upload', async (req, res) => {
+app.get('/get', async (req, res) => {
     const tk = req.query.token as string;
     const hash = makeHash(tk);
     if(tokens.has(hash)){
+        const obj = {
+            처리중:[],
+            목록:[],
+        };
+        let start = Number(req.query.start);
+        let limit = Number(req.query.limit);
+        let isall = Number(req.query.isall);
+        if(isNaN(start)){
+            start = 0;
+        }
+        if(isNaN(limit)){
+            limit = Infinity;
+        }
+        if(isNaN(isall) || isall > 2){
+            isall = 0;
+        }
+        const dir = await fs.promises.readdir(`./videos`);
+        let k = 0;
+        const arr = ['처리중', '목록'];
+        for(let i = start; i < dir.length; i++){
+            if(isall === 1 && dir[i].search(/\.temp$/) > -1 || isall === 2 && dir[i].search(/\.temp$/) === -1){
+                continue;
+            }
+            k++;
+            obj[arr[+!(dir[i].search(/\.temp/) + 1)]].push(dir[i]);
+            if(limit <= k){
+                break;
+            }
+        }
+        res.json(obj);
+    }
+    res.status(404);
+    res.end('bad');
+})
+
+app.get('/delete', async (req, res) => {
+    const tk = req.query.token as string;
+    const hash = makeHash(tk);
+    if(tokens.has(hash) && req.query.url && (req.query.url as string).search(/\.temp$/) === -1){
+        const url = `./videos${req.query.url as string}`;
+        try{
+            await fs.promises.stat(url);
+            await deleteAll(url);
+            await fs.promises.rmdir(url);
+        } catch(err){
+            console.log(err);
+            res.status(404);
+            res.end('bad');
+        }
+    }
+    res.status(404);
+    res.end('bad');
+});
+
+app.post('/upload', async (req, res) => {
+    const tk = req.query.token as string;
+    const hash = makeHash(tk);
+    if(tokens.has(hash) && req.query.url && (req.query.url as string).search(/\.temp$/) === -1){
         const url = `./videos${req.query.url as string}`;
         const arr = url.split('/');
         for(let i = 1; i <= arr.length; i++){
