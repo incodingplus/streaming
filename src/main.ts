@@ -21,7 +21,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 const b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
 const setToBase = (set:HowLong):string => {
-    const arr:number[] = Array(Math.floor(set.length / 6) * 6).fill(0);
+    const arr:number[] = Array(Math.ceil(set.length / 6) * 6).fill(0);
     const result:string[] = [];
     for(let i of set.set){
         const match = i.match(/^index(\d+)\.ts$/);
