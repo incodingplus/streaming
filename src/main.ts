@@ -4,7 +4,7 @@ import express from 'express';
 import crypto from 'crypto';
 import fs from 'fs';
 import fetch from 'node-fetch';
-import { HowLong } from './type.js';
+import { HowLong, Finish } from './type.js';
 import { check_url, dev_check_url, finish, dev_finish } from './url.js';
 
 const app = express.Router();
@@ -65,12 +65,18 @@ const historyDelete = (token:string, dev:string = '') => async () => {
             if(dev === 'dev'){
                 request = dev_finish
             }
+            const obj:Finish = {
+                user_id: a.user_id,
+                material_id: a.material_id,
+                length: a.length,
+                size: a.size
+            };
             await fetch(request, {
                 method:'POST',
                 headers:{
                     'Content-Type':'application/json'
                 },
-                body:JSON.stringify(a)
+                body:JSON.stringify(obj)
             });
             console.log(a);
         } catch(err){

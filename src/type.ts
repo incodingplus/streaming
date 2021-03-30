@@ -7,3 +7,10 @@ export interface HowLong{
     material_id:string;
     dev:string;
 };
+
+export interface Finish{
+    user_id:string;
+    material_id:string;
+    size:number;
+    length:number;
+};
