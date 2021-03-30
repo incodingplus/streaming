@@ -5,4 +5,5 @@ export interface HowLong{
     size:number;
     time:NodeJS.Timeout|null;
     material_id:string;
+    dev:string;
 };
