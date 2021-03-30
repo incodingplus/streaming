@@ -141,7 +141,7 @@ app.use('/videodata', (req, res, next) => {
         const arr = req.path.split('/');
         const token = arr[1];
         const url = decodeURIComponent(`/${arr.slice(3, -1).join('/')}`);
-        const hash = makeHash(token, url, );
+        const hash = makeHash(token, url);
         if(hash === arr[2]){
             const name = decodeURIComponent(arr.slice(-1)[0]);
             const obj = history.get(token);
