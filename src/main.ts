@@ -167,8 +167,9 @@ app.post('/view', async (req, res) => {
                 data:true,
                 success:true
             };
+            let dev = req.body.dev === 'dev' ? 'dev' : '';
             if(token !== 'admin'){
-                if(req.body.dev === 'dev'){
+                if(dev === 'dev'){
                     const resp = await fetch(`${dev_check_url}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url.slice(1))}`);
                     data = await resp.json();
                 } else {
@@ -183,10 +184,6 @@ app.post('/view', async (req, res) => {
                 str = str.replace('\"{{url}}\"', `\"https://in-coding.kro.kr/video/videodata/${token}/${hash}${url}/index.m3u8\"`);
                 str = str.replace('\"{{token}}\"', `\"${token}\"`);
                 const dir = await fs.promises.readdir(`./videos${url}`);
-                let dev = '';
-                if(typeof req.query.dev === 'string' && req.query.dev === 'dev'){
-                    dev = 'dev';
-                }
                 const obj:HowLong = {
                     user_id:token,
                     set:new Set<string>(),
