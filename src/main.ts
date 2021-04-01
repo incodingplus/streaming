@@ -245,7 +245,7 @@ app.post('/view', async (req, res) => {
                 const dir = await fs.promises.readdir(`./videos${url}`);
                 console.log(`history 있는지 : ${history.has(token)}`);
                 if(history.has(token)){
-                    historyDelete(token, dev);
+                    await historyDelete(token, dev)();
                 }
                 const obj:HowLong = {
                     user_id:token,
