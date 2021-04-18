@@ -78,14 +78,14 @@ const main = async () => {
     } catch(err){
         await fs.promises.mkdir('./videos');
     }
-    try{
-        await fs.promises.stat('./logs');
-    } catch(err){
-        await fs.promises.mkdir('./logs');
-    }
+    // try{
+    //     await fs.promises.stat('./logs');
+    // } catch(err){
+    //     await fs.promises.mkdir('./logs');
+    // }
     try{
         const dir = await fs.promises.readdir('./videos');
-        await fs.promises.writeFile(`./logs/${Date.now()}.json`, JSON.stringify(dir), {encoding:'utf-8'});
+        // await fs.promises.writeFile(`./logs/${Date.now()}.json`, JSON.stringify(dir), {encoding:'utf-8'});
         for(let i of dir){
             if(i.search(/\.temp$/) > -1){
                 await deleteAll(`./videos/${i}`, ['index.mp4']);
