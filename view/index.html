@@ -17,7 +17,8 @@
     <button id="file">파일 선택</button><br>
     토큰 : <input type="text" id="token"><br>
     주소 : <input type="text" id="url"><br>
-    <button id="view">이 주소로 열기</button>
+    <button id="view">이 주소로 열기</button><br>
+    <input type="text" id="delete"> 이 주소 삭제<br>
     <form name="frmData" id="frmData" method="post" action="/video/view">
         <input type="hidden" name="token"/>
         <input type="hidden" name="url"/>
@@ -29,13 +30,14 @@
         const token = document.querySelector('#token');
         const view = document.querySelector('#view');
         const form = document.querySelector('#frmData');
+        const del = document.querySelector('#delete');
         button.addEventListener('click', async e => {
             const input = document.createElement('input');
             input.type = 'file';
             input.addEventListener('change', async e => {
                 if(aaa.value.match(/^\/.+?(?<!\/)$/)){
                     const url = `${aaa.value}`;
-                    const res = await fetch(`${location.origin}/video/upload?token=admin&url=${url}`, {
+                    const res = await fetch(`${location.origin}/video/upload?token=admin&time=admin&url=${url}`, {
                         method:'POST',
                         headers:{
                             'Content-Type':'application/octet-stream'
@@ -49,6 +51,23 @@
             }, {once:true});
             input.click();
         });
+
+        del.addEventListener('keydown', async e => {
+            if(e.key === 'Enter'){
+                if(del.value.match(/^\/.+?(?<!\/)$/)){
+                    const url = `${del.value}`;
+                    const res = await fetch(`${location.origin}/video/delete?token=admin&time=admin&url=${url}`, {
+                        method:'GET',
+                        headers:{
+                            'Content-Type':'application/octet-stream'
+                        }
+                    });
+                    console.log(await res.text());
+                } else {
+                    alert('url 형식 지키기');
+                }
+            }
+        })
 
         view.addEventListener('click', e => {
             const name = `video ${Date.now()}`;

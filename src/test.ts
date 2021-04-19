@@ -1,11 +1,30 @@
 import express from 'express';
-
+import { tokens } from './main.js';
 const router = express.Router();
 
+router.post('/howlong', (req, res) => {
+    console.log(req.body);
+    res.end('잘옴');
+});
+
+//token 체크
+router.use('/', (req, res, next) => {
+    if(req.query.token){
+        next();
+    } else {
+        res.redirect('/video/error');
+    }
+})
+
 router.get('/', (req, res) => {
-    res.sendFile('index.html', {
-        root:'./view'
-    });
+    if(tokens.has(req.query.token as string)){
+        res.sendFile('index.html', {
+            root:'./view'
+        });
+    } else {
+        res.status(404);
+        res.redirect('video/error');
+    }
 });
 
 router.get('/check', (req, res) => {   //서버 코드
@@ -15,11 +34,6 @@ router.get('/check', (req, res) => {   //서버 코드
     } else {
         res.end('bad');
     }
-});
-
-
-router.post('/howlong', (req, res) => {
-    console.log(req.body);
 });
 
 export default router;
