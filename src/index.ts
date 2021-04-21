@@ -6,7 +6,7 @@ app.use(express.urlencoded({
     extended:true
 }));
 app.use(express.json());
-app.get('/.well-known/acme-challenge/:id', (req, res) => {
+app.use('/.well-known/acme-challenge/:id', (req, res) => {
     console.log(req.params.id);
     res.end('good');
 });
