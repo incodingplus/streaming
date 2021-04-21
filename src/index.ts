@@ -19,6 +19,7 @@ app.use('/video/test', test);
 app.use('/video', main);
 
 if(process.argv[2] === 'https'){
+    console.log('https 가동');
     const options = {
         key: fs.readFileSync(`/etc/letsencrypt/live/${process.argv[3]}/privkey.pem`),
         cert: fs.readFileSync(`/etc/letsencrypt/live/${process.argv[3]}/cert.pem`),
