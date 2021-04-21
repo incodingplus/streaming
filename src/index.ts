@@ -7,7 +7,7 @@ app.use(express.urlencoded({
 }));
 app.use(express.json());
 app.use('/.well-known/acme-challenge/:id', (req, res) => {
-    console.log(req.params.id);
+    console.log(req.originalUrl);
     res.end('good');
 });
 
