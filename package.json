@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "concurrently \"tsc -w\" \"nodemon ./dist/index.js --watch './dist'\"",
+    "start": "node ./dist/index.js https video.in-coding.com",
+    "test": "concurrently \"tsc -w\" \"nodemon ./dist/index.js --watch './dist'\"",
     "start-dev": "sudo concurrently \"sudo tsc -w\" \"sudo nodemon ./dist/index.js --watch './dist'\""
   },
   "author": "",
