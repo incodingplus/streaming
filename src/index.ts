@@ -6,6 +6,11 @@ app.use(express.urlencoded({
     extended:true
 }));
 app.use(express.json());
+app.get('/.well-known/acme-challenge/:id', (req, res) => {
+    console.log(req.params.id);
+    res.end('good');
+});
+
 app.use('/video/test', test);
 app.use('/video', main);
 
