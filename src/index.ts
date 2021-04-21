@@ -21,8 +21,8 @@ app.use('/video', main);
 if(process.argv[2] === 'https'){
     console.log('https 가동');
     const options = {
-        key: fs.readFileSync(`/etc/letsencrypt/live/${process.argv[3]}/privkey.pem`),
-        cert: fs.readFileSync(`/etc/letsencrypt/live/${process.argv[3]}/cert.pem`),
+        key: fs.readFileSync(`/etc/letsencrypt/live/${process.argv[3]}/privkey.pem`, {encoding:"utf-8"}),
+        cert: fs.readFileSync(`/etc/letsencrypt/live/${process.argv[3]}/cert.pem`, {encoding:"utf-8"}),
         ca: fs.readFileSync(`/etc/letsencrypt/live/${process.argv[3]}/chain.pem`)
     }
     https.createServer(options, app).listen(5000);
