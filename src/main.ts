@@ -21,7 +21,7 @@ ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
 const main = async () => {
     try{
-        const datas = JSON.parse(await fs.promises.readFile('./public/env.json', {encoding:'utf-8'}));
+        const datas = JSON.parse(await fs.promises.readFile('./env.json', {encoding:'utf-8'}));
         for(let [i, v] of Object.entries(datas)){
             console.log(v);
             ENV.set(i, v as string);

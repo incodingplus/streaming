@@ -8,13 +8,19 @@ RUN apt-get install -y certbot
 
 WORKDIR /usr/src/app
 
+RUN mkdir /usr/src/script
+
+ADD ./docker.sh /usr/src/script/docker.sh
+
+RUN chmod 777 /usr/src/script/docker.sh
+
 # COPY package*.json ./
 
 # RUN npm install
 
 # COPY . .
 
-ENTRYPOINT ["/bin/bash", "-c" , "git config --global user.email \"myrlagksruf@gmail.com\" && git config --global user.name \"myrlagksruf\" && /bin/bash"]
+ENTRYPOINT ["/usr/src/script/docker.sh"]
 
 EXPOSE 5000
 
