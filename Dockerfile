@@ -1,13 +1,18 @@
-FROM node:latest
+FROM ubuntu:latest
+
+RUN apt-get update
+RUN apt-get -y upgrade
+RUN apt-get install -y nodejs
+RUN apt-get install -y git
 
 WORKDIR /usr/src/app
 
-COPY package*.json ./
+# COPY package*.json ./
 
-RUN npm install
+# RUN npm install
 
-COPY . .
+# COPY . .
 
 EXPOSE 5000
 
-CMD [ "node", "dist/index.js" ]
+# CMD [ "node", "dist/index.js" ]
