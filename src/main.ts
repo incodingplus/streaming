@@ -378,8 +378,8 @@ app.post('/upload', async (req, res) => {
     const w = fs.createWriteStream(`${url}.temp/index.mp4`);
     req.pipe(w);
     req.on('end', () => {
-        setHls(url);
         res.send('upload success');
+        setHls(url);
     });
 });
 
