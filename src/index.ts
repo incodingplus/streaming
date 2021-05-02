@@ -2,7 +2,10 @@ import main from './main.js';
 import express from 'express';
 import test from './test.js';
 import fs from 'fs';
+import cors from 'cors';
 const app = express();
+
+app.use(cors());
 
 app.use(express.urlencoded({
     extended:true
