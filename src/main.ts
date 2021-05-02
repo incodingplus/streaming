@@ -376,10 +376,10 @@ app.post('/upload', async (req, res) => {
     }
     await fs.promises.rename(url, `${url}.temp`);
     const w = fs.createWriteStream(`${url}.temp/index.mp4`);
-    res.send('upload success');
     req.pipe(w);
     req.on('end', () => {
         setHls(url);
+        res.send('upload success');
     });
 });
 
