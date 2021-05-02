@@ -375,12 +375,16 @@ app.post('/upload', async (req, res) => {
         return;
     }
     await fs.promises.rename(url, `${url}.temp`);
-    const w = fs.createWriteStream(`${url}.temp/index.mp4`);
-    req.pipe(w);
-    req.on('end', () => {
-        res.send('upload success');
-        setHls(url);
-    });
+    res.end('upload success');
+    await fs.promises.writeFile(`${url}.temp/index.mp4`, req.body);
+    setHls(url);
+    // 파이프 라인
+    // const w = fs.createWriteStream(`${url}.temp/index.mp4`);
+    // req.pipe(w);
+    // req.on('end', () => {
+    //     res.send('upload success');
+    //     setHls(url);
+    // });
 });
 
 export default app;
