@@ -21,19 +21,26 @@
 </head>
 <body>
     <video id="video" width="640" height="360" controls></video>
+    <h1 id="errorMessage" style="display: none;">영상 조회에 실패했습니다. </h1>
     <script>
         const token = "{{token}}";
         const time = () => new Promise((res, rej) => {
             setTimeout(res, 3000);
         });
         const keepAlive = async () => {
-            const res = await fetch(`/video/keepalive?token=${token}`);
-            if(res.status === 200){
-                await time();
-                keepAlive();
+            try{
+                const res = await fetch(`/video/keepalive?token=${token}`);
+                if(res.status === 200){
+                    await time();
+                    keepAlive();
+                }
+            } catch(err){
+                video.remove()
+                document.querySelector('#errorMessage').style.display = 'block'
             }
         };
         keepAlive();
+
         const getVideo = url => {
             let canplay = false;
             let inter = false;
