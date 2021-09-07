@@ -239,6 +239,13 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
         console.error(err)
         res.status(500).end('error')
         return;
+    } finally {
+        videoToS3Stream.destroy()
+        videoToProbeStream.destroy()
+
+        global.gc?.()
+
+        delete req['body']
     }
     
     res.status(200).end('upload success')
