@@ -242,8 +242,6 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
     } finally {
         videoToS3Stream.destroy()
         videoToProbeStream.destroy()
-
-        runGC()
     }
     
     res.status(200).end('upload success')
@@ -258,10 +256,11 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
 function runGC(){
     if(global.gc == null) return;
 
-    setTimeout(() => {
+    setInterval(() => {
         console.debug('run gc')
         global.gc()
     }, 1000 * 10)
 }
+runGC()
 
 export default app;
