@@ -1,5 +1,7 @@
 import express from 'express';
-import { tokens } from './main.js';
+import path from 'path'
+import { tokens } from './router/token';
+
 const router = express.Router();
 
 router.post('/howlong', (req, res) => {
@@ -19,11 +21,11 @@ router.use('/', (req, res, next) => {
 router.get('/', (req, res) => {
     if(tokens.has(req.query.token as string)){
         res.sendFile('index.html', {
-            root:'./view'
+            root: path.resolve(__dirname, '../view')
         });
     } else {
         res.status(404);
-        res.redirect('video/error');
+        res.redirect('/video/error');
     }
 });
 

@@ -3,14 +3,14 @@ import { HowLong } from './type.js';
 
 const b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 
-export const setToBase = (set:HowLong):string => {
-    const arr:number[] = Array(Math.ceil(set.length / 6) * 6).fill(0);
+export const setToBase = ({ set, length, files }: Pick<HowLong, 'set'|'length'|'files'>):string => {
+    const arr:number[] = Array(Math.ceil(length / 6) * 6).fill(0);
     const result:string[] = [];
-    for(let i of set.set){
-        const match = i.match(/^index(\d+)\.ts$/);
-        if(match){
-            arr[Number(match[1])] = 1;
-        }
+    for(let i of set){
+        if(/\.ts$/.test(i) == false) continue
+
+        const idx = files.findIndex(f => f === i)
+        if(idx != -1 && idx < arr.length) arr[idx] = 1
     }
     let k:number = 0;
     for(let i = 0; i < arr.length; i++){

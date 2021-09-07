@@ -81,6 +81,8 @@ typings/
 # Nuxt.js build / generate output
 .nuxt
 dist
+dist_webpack
+.webpack_cache
 
 # Gatsby files
 .cache/
@@ -105,3 +107,5 @@ dist
 videos/
 package-lock.json
 logs/
+
+env.dev.json
