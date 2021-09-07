@@ -243,9 +243,7 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
         videoToS3Stream.destroy()
         videoToProbeStream.destroy()
 
-        global.gc?.()
-
-        delete req['body']
+        runGC()
     }
     
     res.status(200).end('upload success')
@@ -256,5 +254,14 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
         console.error(err)
     })
 });
+
+function runGC(){
+    if(global.gc == null) return;
+
+    setTimeout(() => {
+        console.debug('run gc')
+        global.gc()
+    }, 1000 * 10)
+}
 
 export default app;

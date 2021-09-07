@@ -36,8 +36,13 @@ export const getVideoLength = (videoStream: Readable) => {
             reject(e)
         })
 
-        ffmpeg_process.stdin.on('error', () => {
+        ffmpeg_process.stdin.on('error', (err: any) => {
+            if (['ECONNRESET', 'EPIPE', 'EOF'].indexOf(err.code) >= 0) { return; }
             console.warn('ffmpeg stdin 입력중 에러')
+        })
+        ffmpeg_process.stdin.on('close', () => {
+            videoStream.pause()
+            videoStream.unpipe(ffmpeg_process.stdin)
         })
 
         videoStream.pipe(ffmpeg_process.stdin)
