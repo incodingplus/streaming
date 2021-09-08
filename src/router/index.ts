@@ -120,6 +120,7 @@ app.post('/view', async (req, res) => {
                 const checkUrl = dev === 'dev' ? process.env.DEV_CHECK_URL : process.env.CHECK_URL;
                 const resp = await fetch.get(`${checkUrl}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url.slice(1))}`);
                 data = await resp.json();
+                logger.debug(`권한 ${data}`)
             }
             
             if(data.data && data.success){
@@ -148,7 +149,9 @@ app.post('/view', async (req, res) => {
                 res.send(str).end();
                 return;
             }
-        }catch(err){
+        } catch(err){
+            logger.error(`영상 페이지 요청 처리 중 에러 ${err.message}`)
+            console.error(err)
             res.redirect('/video/error');
             return;
         }
