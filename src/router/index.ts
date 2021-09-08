@@ -21,8 +21,8 @@ const history = new AutoRemoveMap<string, HowLong>();
 history.on('set', () => {
     logger.debug('history 추가됨')
 })
-history.on('delete', () => {
-    logger.debug('history 삭제됨')
+history.on('delete', (v) => {
+    logger.debug(`history 삭제됨`)
 })
 history.on('resetTimeout', () => {
     logger.debug('history resetTimeout')
@@ -41,9 +41,9 @@ const sendWatchStatus = async ({ set, length, files, user_id, material_id, ms, d
         };
         await fetch.post(request, obj);
 
-        logger.info('영상 시청상태 전송 성공', obj)
+        logger.info(obj, '영상 시청상태 전송 성공')
     } catch(err){
-        logger.error(`시청 상태 전송 실패 : ${err.message}`, { set, length, files, user_id, material_id, ms, dev })
+        logger.error({ set, length, files, user_id, material_id, ms, dev }, `시청 상태 전송 실패 : ${err.message}`)
         logger.error(err);
     }
 }
