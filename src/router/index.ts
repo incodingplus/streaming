@@ -131,7 +131,7 @@ app.post('/view', async (req, res) => {
 
                 const list = await s3.listObject(path.join(process.env.VIDEO_PATH, url, '/'))
                 const m3u8 = await s3.getObject(path.join(process.env.VIDEO_PATH, url, 'index.m3u8'))
-                logger.log(`history 있는지 : ${history.has(token)}`);
+                logger.debug(`history 있는지 : ${history.has(token)}`);
                 if(history.has(token)){
                     history.delete(token)
                 }

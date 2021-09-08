@@ -6,7 +6,7 @@ import { logger } from './utils/logger'
 const router = express.Router();
 
 router.post('/howlong', (req, res) => {
-    logger.log(req.body);
+    logger.debug(req.body);
     res.end('잘옴');
 });
 
