@@ -9,18 +9,19 @@ import cors from 'cors';
 import main from './router';
 import api from './router/api';
 import test from './test.js';
+import { logger } from './utils/logger'
 
 const app = express();
 
 app.use(cors());
 
 app.use(express.urlencoded({
-    limit:'500mb',
-    extended:true
+    limit: '500mb',
+    extended: true
 }));
 
 app.use(express.raw({
-    limit:'2gb'
+    limit: '4gb'
 }));
 app.use(express.json());
 
@@ -29,12 +30,12 @@ app.use('/video', main);
 app.use('/api', api);
 
 app.use((err, req, res, next) => {
-    console.error('Error captured')
-    console.error(err)
+    logger.error('Error captured')
+    logger.error(err)
 
     req.status(500).send('Internal server error')
 })
 
 app.listen(5000, () => {
-    console.info('Server listen on 5000')
+    logger.info('Server listen on 5000')
 });

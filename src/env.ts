@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { logger } from './utils/logger'
 
 export const loadEnv = (envPath: string) => {
     try{
@@ -9,7 +10,7 @@ export const loadEnv = (envPath: string) => {
         
         return true
     } catch(err){
-        console.error(`loadEnv 에러 ${err.message}`)
+        logger.error(`loadEnv 에러 ${err.message}`)
         return false
     }
 }

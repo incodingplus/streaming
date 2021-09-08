@@ -13,18 +13,19 @@ import { validateHash, validateToken, validateURL } from './middleware'
 import { getVideoLength } from './ffmpeg'
 import { isInEncoding, startEncode } from './encode'
 
+import { logger } from '../utils/logger'
+
 const app = express.Router();
 
 const history = new AutoRemoveMap<string, HowLong>();
-
 history.on('set', () => {
-    console.debug('history 추가됨')
+    logger.debug('history 추가됨')
 })
 history.on('delete', () => {
-    console.debug('history 삭제됨')
+    logger.debug('history 삭제됨')
 })
 history.on('resetTimeout', () => {
-    console.debug('history resetTimeout')
+    logger.debug('history resetTimeout')
 })
 
 const sendWatchStatus = async ({ set, length, files, user_id, material_id, ms, dev }: HowLong) => {
@@ -40,10 +41,10 @@ const sendWatchStatus = async ({ set, length, files, user_id, material_id, ms, d
         };
         await fetch.post(request, obj);
 
-        console.info('영상 시청상태 전송 성공', obj)
+        logger.info('영상 시청상태 전송 성공', obj)
     } catch(err){
-        console.error(`시청 상태 전송 실패 : ${err.message}`, { set, length, files, user_id, material_id, ms, dev })
-        console.error(err);
+        logger.error(`시청 상태 전송 실패 : ${err.message}`, { set, length, files, user_id, material_id, ms, dev })
+        logger.error(err);
     }
 }
 history.on('delete', sendWatchStatus)
@@ -63,7 +64,7 @@ app.get('/videodata/:token/:hash/:url/:filename', async (req, res) => {
     const { token, hash, url, filename } = req.params
     
     if(/\.(m3u8|ts)$/.test(filename)) {
-        console.debug(`token ${token} ${url}/${filename} 영상 데이터 요청`)
+        logger.debug(`token ${token} ${url}/${filename} 영상 데이터 요청`)
 
         const newHash = makeHash(token, decodeURIComponent(`/${url}`));
         if(hash !== newHash) {
@@ -81,7 +82,7 @@ app.get('/videodata/:token/:hash/:url/:filename', async (req, res) => {
             const file = await s3.getObject(objectKey)
             res.send(file)
         } catch(err) {
-            console.error(err)
+            logger.error(err)
             res.redirect('/video/error')
         }
     } else {
@@ -106,7 +107,7 @@ app.post('/view', async (req, res) => {
     }
 
     if(token && url){
-        console.debug(`token ${token} ${url} 영상 페이지 요청`);
+        logger.debug(`token ${token} ${url} 영상 페이지 요청`);
         try{
             let data = {
                 data:true,
@@ -115,7 +116,7 @@ app.post('/view', async (req, res) => {
             const dev: 'dev'|'' = req.body.dev === 'dev' ? 'dev' : '';
 
             if(token !== '7b3fcee5b1aa32ee5ca8144671816e2534cf2335b5efa3b83af5a902c992b6d9'){
-                console.debug(`token ${token} ${url} 권한 체크`);
+                logger.debug(`token ${token} ${url} 권한 체크`);
                 const checkUrl = dev === 'dev' ? process.env.DEV_CHECK_URL : process.env.CHECK_URL;
                 const resp = await fetch.get(`${checkUrl}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url.slice(1))}`);
                 data = await resp.json();
@@ -129,7 +130,7 @@ app.post('/view', async (req, res) => {
 
                 const list = await s3.listObject(path.join(process.env.VIDEO_PATH, url, '/'))
                 const m3u8 = await s3.getObject(path.join(process.env.VIDEO_PATH, url, 'index.m3u8'))
-                console.log(`history 있는지 : ${history.has(token)}`);
+                logger.log(`history 있는지 : ${history.has(token)}`);
                 if(history.has(token)){
                     history.delete(token)
                 }
@@ -170,7 +171,7 @@ app.get('/error', (req, res) => {
 app.get('/keepalive', validateToken, (req, res) => {
     const token = req.query.token as string;
     if(history.has(token)) {
-        console.debug(`token ${token} keepalive`);
+        logger.debug(`token ${token} keepalive`);
         history.resetTimeout(token, 1000 * 10)
         res.status(200).end('good')
     } else {
@@ -185,8 +186,6 @@ app.get('/uploadmessage', validateToken, (req, res) => {
     res.end('success');
 });
 
-
-
 // app.get('/delete', validateToken, validateHash, validateURL, async (req, res) => {
 //     const url = `${ENV.get('video')}${req.query.url}`;
 //     try{
@@ -196,7 +195,7 @@ app.get('/uploadmessage', validateToken, (req, res) => {
 //         res.end('good');
 //         return;
 //     } catch(err){
-//         console.log(err);
+//         logger.log(err);
 //         res.status(404);
 //         res.end('해당 url 없음');
 //     }
@@ -230,26 +229,27 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
     const duration = await getVideoLength(videoToProbeStream)
 
     try{
-        console.info(`비디오 ${url} 업로드 시작`)
+        logger.info(`비디오 ${url} 업로드 시작`)
         await promise
         
-        console.info(`비디오 ${url} 업로드 성공`)
+        logger.info(`비디오 ${url} 업로드 성공`)
     } catch(err){
-        console.error(`비디오 업로드 중 에러 ${err.message}`)
-        console.error(err)
+        logger.error(`비디오 업로드 중 에러 ${err.message}`)
+        logger.error(err)
         res.status(500).end('error')
         return;
     } finally {
         videoToS3Stream.destroy()
         videoToProbeStream.destroy()
+        req.body = null
     }
     
     res.status(200).end('upload success')
 
     startEncode({ duration, key })
     .catch(err => {
-        console.error('startEncode 함수 호출 중 에러')
-        console.error(err)
+        logger.error('startEncode 함수 호출 중 에러')
+        logger.error(err)
     })
 });
 
@@ -257,10 +257,10 @@ function runGC(){
     if(global.gc == null) return;
 
     setInterval(() => {
-        console.debug('run gc')
+        logger.debug('run gc')
         global.gc()
     }, 1000 * 10)
 }
-runGC()
+// runGC()
 
 export default app;

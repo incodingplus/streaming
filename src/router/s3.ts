@@ -1,6 +1,7 @@
 import type { Readable } from 'stream'
 import { PassThrough } from 'stream'
 import S3 from 'aws-sdk/clients/s3'
+import { logger } from '../utils/logger'
 
 const s3 = new S3({
     credentials: process.env.S3_ACCESS_KEY_ID ? {
@@ -19,7 +20,7 @@ export const listObject = async (prefix: string) => {
     
         return res.Contents
     } catch(err){
-        console.error(err)
+        logger.error(err)
         throw err
     }
 }
@@ -86,7 +87,7 @@ export const listSubDirectories = async (prefix: string) => {
 
         return res.CommonPrefixes.map(el => el.Prefix)
     } catch(err){
-        console.error(err)
+        logger.error(err)
         throw err
     }
 }

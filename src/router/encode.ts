@@ -1,6 +1,7 @@
 import path from 'path'
 import { Lambda } from 'aws-sdk'
 import { putObject } from './s3'
+import { logger } from '../utils/logger'
 
 type WorkingState = {
     key: string
@@ -33,7 +34,7 @@ type Response = {
 }
 const invokeEncodeLambdaFunction = async (key: string, startTime: string, duration: string, tsSubSuffix: string) => {
 
-    console.info(`인코딩 함수 호출 시작 ${key} ${startTime} - ${duration}`)
+    logger.info(`인코딩 함수 호출 시작 ${key} ${startTime} - ${duration}`)
     const res = await lambda.invoke({
         FunctionName: 'split_video_into_ts',
         Payload: JSON.stringify({
@@ -46,10 +47,10 @@ const invokeEncodeLambdaFunction = async (key: string, startTime: string, durati
 
     const state = workingState.get(key)
     state.finished_count += 1
-    console.info(`인코딩 함수 호출 완료 ${key} ${startTime} - ${duration}`)
+    logger.info(`인코딩 함수 호출 완료 ${key} ${startTime} - ${duration}`)
 
     if(!(200 <= res.StatusCode && res.StatusCode < 300)) {
-        console.error('encode lambda function 호출 중 에러')
+        logger.error('encode lambda function 호출 중 에러')
         console.error(res.$response.error)
         throw res.$response.error
     }
@@ -78,7 +79,7 @@ const parseM3U8 = (m3u8: string) => {
 
 export const startEncode = async ({ duration, key }: EncodeMetadata) => {
     
-    console.info(`영상 ${key} 인코딩 시작 (duration: ${duration})`)
+    logger.info(`영상 ${key} 인코딩 시작 (duration: ${duration})`)
 
     const durations = []
     while(duration > 0) {
@@ -92,11 +93,11 @@ export const startEncode = async ({ duration, key }: EncodeMetadata) => {
     })
 
     if(durations.length == 0) {
-        console.error(`영상 ${key} durations 개수가 0 이라 인코딩 중지`)
+        logger.error(`영상 ${key} durations 개수가 0 이라 인코딩 중지`)
         return
     }
 
-    console.info(`영상 ${key} durations: ${durations}`)
+    logger.info(`영상 ${key} durations: ${durations}`)
 
     // 마지막 시간이 3분 미만이면 앞 시간에 추가
     if(durations.length > 1 && durations[durations.length - 1] < 60 * 3) {
@@ -122,9 +123,9 @@ export const startEncode = async ({ duration, key }: EncodeMetadata) => {
     ].join('\n') + '\n'
 
     const m3u8Key = path.join(...key.split('/').slice(0, -1), 'index.m3u8')
-    console.info(`m3u8 파일 생성 및 업로드 시작 ${m3u8Key}`)
+    logger.info(`m3u8 파일 생성 및 업로드 시작 ${m3u8Key}`)
     await putObject(m3u8Key, Buffer.from(m3u8), 'application/x-mpegURL')
-    console.info(`m3u8 파일 생성 및 업로드 완료 ${m3u8Key}`)
+    logger.info(`m3u8 파일 생성 및 업로드 완료 ${m3u8Key}`)
 
     workingState.delete(key)
 }

@@ -1,5 +1,6 @@
 import { spawn } from 'child_process'
 import { Readable } from 'stream'
+import { logger } from '../utils/logger'
 
 const FFMpegPath = process.env.FFMPEG_PATH
 
@@ -25,7 +26,7 @@ export const getVideoLength = (videoStream: Readable) => {
                 const [, hour, minute, second, frame] = str.match(/Duration: (\d+):(\d+):(\d+).(\d+),/)
                 resolve(Number(hour) * 60 * 60 + Number(minute) * 60 + Number(second))
             } else {
-                console.error('get video length 실행 중 에러')
+                logger.error('get video length 실행 중 에러')
                 reject(new Error('duration 을 읽을 수 없습니다.'))
             }
         })
@@ -38,7 +39,7 @@ export const getVideoLength = (videoStream: Readable) => {
 
         ffmpeg_process.stdin.on('error', (err: any) => {
             if (['ECONNRESET', 'EPIPE', 'EOF'].indexOf(err.code) >= 0) { return; }
-            console.warn('ffmpeg stdin 입력중 에러')
+            logger.warn('ffmpeg stdin 입력중 에러')
         })
         ffmpeg_process.stdin.on('close', () => {
             videoStream.pause()

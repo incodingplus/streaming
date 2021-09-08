@@ -1,11 +1,12 @@
 import express from 'express';
 import path from 'path'
 import { tokens } from './router/token';
+import { logger } from './utils/logger'
 
 const router = express.Router();
 
 router.post('/howlong', (req, res) => {
-    console.log(req.body);
+    logger.log(req.body);
     res.end('잘옴');
 });
 
