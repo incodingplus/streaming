@@ -120,7 +120,7 @@ app.post('/view', async (req, res) => {
                 const checkUrl = dev === 'dev' ? process.env.DEV_CHECK_URL : process.env.CHECK_URL;
                 const resp = await fetch.get(`${checkUrl}?token=${encodeURIComponent(token)}&url=${encodeURIComponent(url.slice(1))}`);
                 data = await resp.json();
-                logger.debug(`권한 ${data}`)
+                logger.debug(`권한 ${JSON.stringify(data)}`)
             }
             
             if(data.data && data.success){
