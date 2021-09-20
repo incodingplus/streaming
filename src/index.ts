@@ -39,3 +39,13 @@ app.use((err, req, res, next) => {
 app.listen(5000, () => {
     logger.info('Server listen on 5000')
 });
+
+process.on('uncaughtException', (err) => {
+    logger.error('uncaughtException 발생')
+    logger.error(err)
+})
+
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('unhandledRejection 발생')
+    logger.error(reason)
+})
