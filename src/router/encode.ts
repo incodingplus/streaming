@@ -19,7 +19,7 @@ const lambda = new Lambda({
         secretAccessKey: process.env.AWS_SECRET
     },
     httpOptions: {
-        connectTimeout: 1000 * 60 * 15
+        timeout: 1000 * 60 * 15,
     }
 })
 
