@@ -17,6 +17,9 @@ const lambda = new Lambda({
     credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET
+    },
+    httpOptions: {
+        connectTimeout: 1000 * 60 * 15
     }
 })
 
@@ -42,7 +45,7 @@ const invokeEncodeLambdaFunction = async (key: string, startTime: string, durati
             startTime,
             duration,
             tsSubSuffix
-        })
+        }),
     }).promise()
 
     const state = workingState.get(key)
