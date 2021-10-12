@@ -79,7 +79,7 @@ app.get('/videodata/:token/:hash/:url/:filename', async (req, res) => {
 
         try {
             const objectKey = path.join(process.env.VIDEO_PATH, url, filename)
-            const file = await s3.getObject(objectKey)
+            const file = await s3.getObject(s3.getS3Context(), objectKey)
             res.send(file)
         } catch(err) {
             logger.error(err)
@@ -129,8 +129,8 @@ app.post('/view', async (req, res) => {
                 str = str.replace('\"{{url}}\"', `\"/video/videodata/${token}/${hash}${url}/index.m3u8\"`);
                 str = str.replace('\"{{token}}\"', `\"${token}\"`);
 
-                const list = await s3.listObject(path.join(process.env.VIDEO_PATH, url, '/'))
-                const m3u8 = await s3.getObject(path.join(process.env.VIDEO_PATH, url, 'index.m3u8'))
+                const list = await s3.listObject(s3.getS3Context(), path.join(process.env.VIDEO_PATH, url, '/'))
+                const m3u8 = await s3.getObject(s3.getS3Context(), path.join(process.env.VIDEO_PATH, url, 'index.m3u8'))
                 logger.debug(`history 있는지 : ${history.has(token)}`);
                 if(history.has(token)){
                     history.delete(token)
@@ -226,7 +226,7 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
     const videoToS3Stream = Readable.from(req.body)
     const videoToProbeStream = Readable.from(req.body)
 
-    const { stream, promise } = s3.getObjectWriteStream(key)
+    const { stream, promise } = s3.getObjectWriteStream(s3.getS3Context(), key)
     videoToS3Stream.pipe(stream)
 
     const duration = await getVideoLength(videoToProbeStream)
@@ -249,7 +249,7 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
     
     res.status(200).end('upload success')
 
-    startEncode({ duration, key })
+    startEncode(s3.getS3Context(), { duration, key })
     .catch(err => {
         logger.error('startEncode 함수 호출 중 에러')
         logger.error(err)

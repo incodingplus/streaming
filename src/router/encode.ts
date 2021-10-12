@@ -1,6 +1,6 @@
 import path from 'path'
 import { Lambda } from 'aws-sdk'
-import { putObject } from './s3'
+import { putObject, S3Context } from './s3'
 import { logger } from '../utils/logger'
 
 type WorkingState = {
@@ -35,12 +35,13 @@ type Response = {
     // m3u8 data in hex
     m3u8: string
 }
-const invokeEncodeLambdaFunction = async (key: string, startTime: string, duration: string, tsSubSuffix: string) => {
+const invokeEncodeLambdaFunction = async ({ bucket }: S3Context, key: string, startTime: string, duration: string, tsSubSuffix: string) => {
 
     logger.info(`인코딩 함수 호출 시작 ${key} ${startTime} - ${duration}`)
     const res = await lambda.invoke({
         FunctionName: 'split_video_into_ts',
         Payload: JSON.stringify({
+            bucket,
             videoKey: key,
             startTime,
             duration,
@@ -80,7 +81,7 @@ const parseM3U8 = (m3u8: string) => {
     }
 }
 
-export const startEncode = async ({ duration, key }: EncodeMetadata) => {
+export const startEncode = async (s3Context: S3Context, { duration, key }: EncodeMetadata) => {
     
     logger.info(`영상 ${key} 인코딩 시작 (duration: ${duration})`)
 
@@ -111,7 +112,7 @@ export const startEncode = async ({ duration, key }: EncodeMetadata) => {
     const p = durations.map((d, idx) => {
         const startTime = convertSecondsTohhmmss(durations.slice(0, idx).reduce((sum, el) => el + sum, 0))
         const duration = convertSecondsTohhmmss(d)
-        return invokeEncodeLambdaFunction(key, startTime, duration, String(idx))
+        return invokeEncodeLambdaFunction(s3Context, key, startTime, duration, String(idx))
     })
 
     const m3u8_list = await Promise.all(p)
@@ -127,7 +128,7 @@ export const startEncode = async ({ duration, key }: EncodeMetadata) => {
 
     const m3u8Key = path.join(...key.split('/').slice(0, -1), 'index.m3u8')
     logger.info(`m3u8 파일 생성 및 업로드 시작 ${m3u8Key}`)
-    await putObject(m3u8Key, Buffer.from(m3u8), 'application/x-mpegURL')
+    await putObject(s3Context, m3u8Key, Buffer.from(m3u8), 'application/x-mpegURL')
     logger.info(`m3u8 파일 생성 및 업로드 완료 ${m3u8Key}`)
 
     workingState.delete(key)

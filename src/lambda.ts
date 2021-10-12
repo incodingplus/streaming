@@ -11,79 +11,19 @@ const s3 = new S3({
         secretAccessKey: process.env.S3_SECRET_KEY
     }
 })
+const uploadS3 = new S3({
+    region: 'ap-northeast-2',
+    credentials: {
+        accessKeyId: process.env.UPLOAD_S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.UPLOAD_S3_SECRET_KEY
+    }
+})
 
 const ffmpegPath = '/opt/bin/ffmpeg'
-// const ffmpegPath = '/opt/homebrew/bin/ffmpeg'
-
-// class OutputParser {
-//     state: 'm3u8'|'ts'|''
-//     ts_num: number
-//     m3u8_file: Buffer[]
-//     ts_files: Buffer[][]
-
-//     constructor(){
-//         this.state = ''
-//         this.ts_num = -1
-
-//         this.m3u8_file = []
-//         this.ts_files = []
-//     }
-
-//     update(buf: Buffer){
-
-//         if(this.ts_num === -1){
-//             console.log(buf.slice(0, 4).toString('hex'))
-//         }
-
-//         if(buf.slice(0, 2).toString('hex') === '4740') {
-//             // ts header detect
-//             console.debug('buffer update ts header detect')
-            
-//             this.state = 'ts'
-//             this.ts_num += 1
-
-//             this.ts_files[this.ts_num] = []
-
-//         } else if (buf.slice(0, 4).toString('hex') === '23455854') {
-//             // m3u8 header detect
-//             console.debug('buffer update m3u8 header detect')
-
-//             this.state = 'm3u8'
-
-//             this.m3u8_file = []
-//         }
-
-//         if(this.state === 'm3u8') {
-//             this.m3u8_file.push(buf)
-//         } else if(this.state === 'ts') {
-//             this.ts_files[this.ts_num].push(buf)
-//         }
-//     }
-
-//     digest(){
-//         const ts_files: Buffer[] = this.ts_files.map(
-//             ts_file => Buffer.concat(ts_file)
-//         )
-
-//         const m3u8_buf = Buffer.concat(this.m3u8_file)
-//         console.log(m3u8_buf.toString())
-//         const extinfs = m3u8_buf.toString().split('\n').filter(el => /^#EXTINF/.test(el))
-//         const video_lengths = extinfs.map(
-//             str => str.match(/^#EXTINF:(.*),$/)[1]
-//         )
-
-//         if(video_lengths.length !== ts_files.length) {
-            
-//             // ffprobe
-//         }
-
-//         return {
-//             ts_files, video_lengths
-//         }
-//     }
-// }
 
 type EncodeVideoArgs = {
+    bucket: string
+
     /** videos/{token}/{filename} */
     videoKey: string
     /** HH:mm:ss */
@@ -94,12 +34,14 @@ type EncodeVideoArgs = {
     /** ts 파일 suffix 번호 */
     tsSubSuffix: string
 }
-export const encodeVideo = async ({ videoKey, startTime, duration, tsSubSuffix }: EncodeVideoArgs) => {
+export const encodeVideo = async ({ bucket, videoKey, startTime, duration, tsSubSuffix }: EncodeVideoArgs) => {
     
-    console.log({ videoKey, startTime, duration, tsSubSuffix })
+    const _s3 = bucket === 'bucket-wxsyy6' ? s3 : uploadS3
 
-    const stream = s3.getObject({
-        Bucket: process.env.S3_BUCKET,
+    console.log({ bucket, videoKey, startTime, duration, tsSubSuffix })
+
+    const stream = _s3.getObject({
+        Bucket: bucket,
         Key: videoKey
     }).createReadStream();
     
@@ -121,20 +63,6 @@ export const encodeVideo = async ({ videoKey, startTime, duration, tsSubSuffix }
             `/tmp/videos/index-${tsSubSuffix}.m3u8`
         ])
     
-        // const parser = new OutputParser()
-    
-        // mpeg_process.stdout.on('data', (chunk) => {
-        //     parser.update(chunk)
-        // })
-        // mpeg_process.stdout.on('end', () => {
-        //     const { ts_files, video_lengths } = parser.digest()
-        //     resolve({ ts_files, video_lengths })
-
-        //     console.timeEnd('ENCODING')
-        // })
-        // mpeg_process.on('error', (e) => {
-        //     reject(e)
-        // })
         mpeg_process.on('close', () => {
             console.log('인코딩 완료')
             resolve(null)
@@ -160,8 +88,8 @@ export const encodeVideo = async ({ videoKey, startTime, duration, tsSubSuffix }
     for(const { filename, buf } of files){
         const md5 = crypto.createHash('md5').update(buf).digest('base64')
 
-        await s3.putObject({
-            Bucket: process.env.S3_BUCKET,
+        await _s3.putObject({
+            Bucket: bucket,
             Key: path.join(videoKey.split('/').slice(0, -1).join('/'), filename),
             Body: buf,
             ContentType: filename.endsWith('.m3u8') ? 'application/x-mpegURL' : 'application/octet-stream',

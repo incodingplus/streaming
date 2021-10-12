@@ -1,5 +1,5 @@
 import express from 'express';
-import { listSubDirectories } from './s3';
+import { getS3Context, listSubDirectories } from './s3';
 import { encodingList } from './encode'
 
 const app = express.Router();
@@ -12,7 +12,7 @@ app.get('/status', async (req, res) => {
         return
     }
 
-    const dirs = await listSubDirectories('videos/')
+    const dirs = await listSubDirectories(getS3Context(), 'videos/')
     const videoIds = dirs.map(el => el.match(/\/([^\/]+)\/$/)[1])
 
     const result = {

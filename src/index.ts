@@ -8,9 +8,9 @@ import cors from 'cors';
 
 import main from './router';
 import api from './router/api';
+import user from './router/user'
 import test from './test.js';
 import { logger } from './utils/logger'
-
 
 const app = express();
 
@@ -28,6 +28,7 @@ app.use(express.json());
 
 app.use('/video/test', test);
 app.use('/video', main);
+app.use('/user', user);
 app.use('/api', api);
 
 app.use((err, req, res, next) => {

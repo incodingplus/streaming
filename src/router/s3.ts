@@ -3,6 +3,11 @@ import { PassThrough } from 'stream'
 import S3 from 'aws-sdk/clients/s3'
 import { logger } from '../utils/logger'
 
+export interface S3Context {
+    s3: S3
+    bucket: string
+}
+
 const s3 = new S3({
     credentials: process.env.S3_ACCESS_KEY_ID ? {
         accessKeyId: process.env.S3_ACCESS_KEY_ID,
@@ -11,10 +16,26 @@ const s3 = new S3({
     region: 'ap-northeast-2'
 })
 
-export const listObject = async (prefix: string) => {
+const uploadS3 = new S3({
+    credentials: process.env.UPLOAD_S3_ACCESS_KEY_ID ? {
+        accessKeyId: process.env.UPLOAD_S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.UPLOAD_S3_SECRET
+    } : null,
+    region: 'ap-northeast-2'
+})
+
+export const getS3Context = (): S3Context => ({
+    s3, bucket: process.env.S3_BUCKET
+})
+export const getUploadS3Context = (): S3Context => ({
+    s3: uploadS3,
+    bucket: process.env.UPLOAD_S3_BUCKET
+})
+
+export const listObject = async ({ s3, bucket }: S3Context, prefix: string) => {
     try{
         const res = await s3.listObjectsV2({
-            Bucket: process.env.S3_BUCKET,
+            Bucket: bucket,
             Prefix: prefix
         }).promise()
     
@@ -25,10 +46,10 @@ export const listObject = async (prefix: string) => {
     }
 }
 
-export const getObjectReadStream = (key: string) => {
+export const getObjectReadStream = ({ s3, bucket }: S3Context, key: string) => {
     return new Promise<Readable>((resolve, reject) => {
         const stream = s3.getObject({
-            Bucket: process.env.S3_BUCKET,
+            Bucket: bucket,
             Key: key,
         }).createReadStream();
     
@@ -39,20 +60,20 @@ export const getObjectReadStream = (key: string) => {
     })
 }
 
-export const getObject = async (key: string) => {
+export const getObject = async ({ s3, bucket }: S3Context, key: string) => {
     const res = await s3.getObject({
-        Bucket: process.env.S3_BUCKET,
+        Bucket: bucket,
         Key: key,
     }).promise();
     
     return res.Body as Buffer
 }
 
-export const getObjectWriteStream = (key: string) => {
+export const getObjectWriteStream = ({ s3, bucket }: S3Context, key: string) => {
     const pass = new PassThrough()
 
     const promise = s3.upload({
-        Bucket: process.env.S3_BUCKET,
+        Bucket: bucket,
         Key: key,
         Body: pass
     }).promise()
@@ -62,9 +83,9 @@ export const getObjectWriteStream = (key: string) => {
     }
 }
 
-export const putObject = async (key: string, body: Buffer, contentType: string) => {
+export const putObject = async ({ s3, bucket }: S3Context, key: string, body: Buffer, contentType: string) => {
     const res = await s3.putObject({
-        Bucket: process.env.S3_BUCKET,
+        Bucket: bucket,
         Key: key,
         Body: body,
         ContentType: contentType
@@ -73,14 +94,14 @@ export const putObject = async (key: string, body: Buffer, contentType: string) 
     return res
 }
 
-export const listSubDirectories = async (prefix: string) => {
+export const listSubDirectories = async ({ s3, bucket }: S3Context, prefix: string) => {
     if(prefix.endsWith('/') == false) {
         throw new Error('listSubDirectories prefix 는 /로 끝나야 합니다.')
     }
     
     try{
         const res = await s3.listObjectsV2({
-            Bucket: process.env.S3_BUCKET,
+            Bucket: bucket,
             Prefix: prefix,
             Delimiter: '/'
         }).promise()
