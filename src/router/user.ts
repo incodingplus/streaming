@@ -29,9 +29,9 @@ app.get('/uploadmessage', validateToken, (req, res) => {
  */
 app.post('/upload', validateToken, validateHash, validateURL, async (req, res) => {
 
-    const { url, token: userId } = req.query as Record<string, string>
+    const { url, token: userId, time } = req.query as Record<string, string>
     const videoId = url.slice(1)
-    const key = path.join(process.env.FORM_UPLOAD_PATH, userId, videoId, 'index.mp4')
+    const key = path.join(process.env.FORM_UPLOAD_PATH, userId, videoId, time, 'index.mp4')
 
     if(isInEncoding(key)) {
         res.status(400).end('해당 파일이 인코딩 중입니다.')
