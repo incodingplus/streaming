@@ -9,4 +9,10 @@ aws lambda update-function-code \
     --function-name  split_video_into_ts \
     --zip-file fileb://lambda.zip
 
+aws lambda update-function-code \
+    --region ap-northeast-2 \
+    --profile incoding \
+    --function-name  split_video_encode_jobs \
+    --zip-file fileb://lambda.zip
+
 rm lambda.zip

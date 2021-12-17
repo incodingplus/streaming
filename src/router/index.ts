@@ -10,8 +10,7 @@ import * as s3 from './s3'
 import { getViewHTML } from './view'
 import { tokens } from './token'
 import { validateHash, validateToken, validateURL } from './middleware'
-import { getVideoLength } from './ffmpeg'
-import { isInEncoding, startEncode } from './encode'
+import { isInEncoding, invokeEncodeLambdaFunction } from './encode'
 
 import { logger } from '../utils/logger'
 
@@ -224,17 +223,12 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
     }
 
     const videoToS3Stream = Readable.from(req.body)
-    const videoToProbeStream = Readable.from(req.body)
-
-    const { stream, promise } = s3.getObjectWriteStream(s3.getS3Context(), key)
-    videoToS3Stream.pipe(stream)
-
-    const duration = await getVideoLength(videoToProbeStream)
-
+    
     try{
         logger.info(`비디오 ${url} 업로드 시작`)
+        const { stream, promise } = s3.getObjectWriteStream(s3.getS3Context(), key)
+        videoToS3Stream.pipe(stream)
         await promise
-        
         logger.info(`비디오 ${url} 업로드 성공`)
     } catch(err){
         logger.error(`비디오 업로드 중 에러 ${err.message}`)
@@ -243,13 +237,12 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
         return;
     } finally {
         videoToS3Stream.destroy()
-        videoToProbeStream.destroy()
         req.body = null
     }
     
     res.status(200).end('upload success')
 
-    startEncode(s3.getS3Context(), { duration, key })
+    invokeEncodeLambdaFunction(s3.getS3Context().bucket, key)
     .catch(err => {
         logger.error('startEncode 함수 호출 중 에러')
         logger.error(err)
