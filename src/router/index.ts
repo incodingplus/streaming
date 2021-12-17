@@ -243,10 +243,6 @@ app.post('/upload', validateToken, validateHash, validateURL, async (req, res) =
     res.status(200).end('upload success')
 
     invokeEncodeLambdaFunction(s3.getS3Context().bucket, key)
-    .catch(err => {
-        logger.error('startEncode 함수 호출 중 에러')
-        logger.error(err)
-    })
 });
 
 function runGC(){

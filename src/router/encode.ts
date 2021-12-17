@@ -41,7 +41,7 @@ export const invokeEncodeLambdaFunction = async (bucket: string, key: string) =>
         })
         logger.error('encode lambda function 호출 중 에러')
         console.error(res.$response.error)
-        throw res.$response.error
+        return false
     }
     workingState.delete(key)
     logger.info(`인코딩 함수 호출 성공 ${key}`)
