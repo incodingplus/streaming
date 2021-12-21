@@ -28,7 +28,7 @@ export const invokeEncodeLambdaFunction = async (bucket: string, key: string) =>
 
     logger.info(`인코딩 함수 호출 시작 ${key}`)
     const res = await lambda.invoke({
-        FunctionName: 'split_video_into_ts',
+        FunctionName: 'split_video_encode_jobs',
         Payload: JSON.stringify(<SplitJobArgs>{
             bucket,
             videoKey: key,
