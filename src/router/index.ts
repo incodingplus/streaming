@@ -204,55 +204,25 @@ app.get('/uploadmessage', validateToken, (req, res) => {
 // });
 
 /**
- * POST /video/upload
- * query {
- *  url: string
- *  token: string
- *  time: number
+ * POST /video/uploadFinish
+ * body {
+ *  material_root_id: string
  * }
  */
-app.post('/upload', validateToken, validateHash, validateURL, async (req, res) => {
+app.post('/uploadFinish', async (req, res) => {
+    const { material_root_id } = req.body as Record<string, string>
 
-    const { url } = req.query as Record<string, string>
-    const videoId = url.slice(1)
-    const key = path.join(process.env.VIDEO_PATH, videoId, 'index.mp4')
-
-    if(isInEncoding(key)) {
+    logger.info(`비디오 ${material_root_id} 업로드 성공 신호 수신`)
+    
+    if(isInEncoding(material_root_id)) {
+        logger.info(`비디오 ${material_root_id} 이미 인코딩 중이라 리턴`)
         res.status(400).end('해당 파일이 인코딩 중입니다.')
         return;
     }
-
-    const videoToS3Stream = Readable.from(req.body)
+    res.status(200).end('success')
     
-    try{
-        logger.info(`비디오 ${url} 업로드 시작`)
-        const { stream, promise } = s3.getObjectWriteStream(s3.getS3Context(), key)
-        videoToS3Stream.pipe(stream)
-        await promise
-        logger.info(`비디오 ${url} 업로드 성공`)
-    } catch(err){
-        logger.error(`비디오 업로드 중 에러 ${err.message}`)
-        logger.error(err)
-        res.status(500).end('error')
-        return;
-    } finally {
-        videoToS3Stream.destroy()
-        req.body = null
-    }
-    
-    res.status(200).end('upload success')
-
-    invokeEncodeLambdaFunction(s3.getS3Context().bucket, key)
+    logger.info(`비디오 ${material_root_id} 이미 인코딩 람다 함수 호출 시작`)
+    invokeEncodeLambdaFunction(s3.getS3Context().bucket, material_root_id)
 });
-
-function runGC(){
-    if(global.gc == null) return;
-
-    setInterval(() => {
-        logger.debug('run gc')
-        global.gc()
-    }, 1000 * 10)
-}
-// runGC()
 
 export default app;

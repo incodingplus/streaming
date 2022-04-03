@@ -8,7 +8,7 @@ import cors from 'cors';
 
 import main from './router';
 import api from './router/api';
-import test from './test.js';
+import test from './test';
 import { logger } from './utils/logger'
 
 const app = express();
@@ -21,7 +21,7 @@ app.use(express.urlencoded({
 }));
 
 app.use(express.raw({
-    limit: '4gb'
+    limit: '8gb'
 }));
 app.use(express.json());
 

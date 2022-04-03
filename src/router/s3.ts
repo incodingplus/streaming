@@ -16,20 +16,8 @@ const s3 = new S3({
     region: 'ap-northeast-2'
 })
 
-const uploadS3 = new S3({
-    credentials: process.env.UPLOAD_S3_ACCESS_KEY_ID ? {
-        accessKeyId: process.env.UPLOAD_S3_ACCESS_KEY_ID,
-        secretAccessKey: process.env.UPLOAD_S3_SECRET
-    } : null,
-    region: 'ap-northeast-2'
-})
-
 export const getS3Context = (): S3Context => ({
     s3, bucket: process.env.S3_BUCKET
-})
-export const getUploadS3Context = (): S3Context => ({
-    s3: uploadS3,
-    bucket: process.env.UPLOAD_S3_BUCKET
 })
 
 export const listObject = async ({ s3, bucket }: S3Context, prefix: string) => {

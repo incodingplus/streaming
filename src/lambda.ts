@@ -1,7 +1,6 @@
 import type { EncodeVideoArgs, SplitJobArgs } from './types'
 import { S3, Lambda } from 'aws-sdk'
 import { spawn, execSync } from 'child_process'
-import path from 'path'
 import crypto from 'crypto'
 import fs from 'fs'
 import { Readable } from 'stream'
@@ -14,11 +13,7 @@ const s3 = new S3({
     }
 })
 const uploadS3 = new S3({
-    region: 'ap-northeast-2',
-    credentials: {
-        accessKeyId: process.env.UPLOAD_S3_ACCESS_KEY_ID,
-        secretAccessKey: process.env.UPLOAD_S3_SECRET_KEY
-    }
+    region: 'ap-northeast-2'
 })
 
 const lambda = new Lambda({
@@ -36,13 +31,11 @@ const ffmpegPath = '/opt/bin/ffmpeg'
 
 export const encodeVideo = async ({ bucket, videoKey, startTime, duration, tsSubSuffix }: EncodeVideoArgs) => {
     
-    const _s3 = bucket === 'bucket-wxsyy6' ? s3 : uploadS3
-
     console.log({ bucket, videoKey, startTime, duration, tsSubSuffix })
 
-    const stream = _s3.getObject({
-        Bucket: bucket,
-        Key: videoKey
+    const stream = uploadS3.getObject({
+        Bucket: 'video-upload.in-coding.com',
+        Key: `${videoKey}/index.mp4`
     }).createReadStream();
     
     await new Promise((resolve, reject) => {
@@ -88,9 +81,9 @@ export const encodeVideo = async ({ bucket, videoKey, startTime, duration, tsSub
     for(const { filename, buf } of files){
         const md5 = crypto.createHash('md5').update(buf).digest('base64')
 
-        await _s3.putObject({
+        await s3.putObject({
             Bucket: bucket,
-            Key: path.join(videoKey.split('/').slice(0, -1).join('/'), filename),
+            Key: `videos/${videoKey}/${filename}`,
             Body: buf,
             ContentType: filename.endsWith('.m3u8') ? 'application/x-mpegURL' : 'application/octet-stream',
             ContentMD5: md5
@@ -152,11 +145,10 @@ const parseM3U8 = (m3u8: string) => {
 }
 
 export const splitJob = async ({ bucket, videoKey }: SplitJobArgs) => {
-    const _s3 = bucket === 'bucket-wxsyy6' ? s3 : uploadS3
 
-    const stream = _s3.getObject({
-        Bucket: bucket,
-        Key: videoKey
+    const stream = uploadS3.getObject({
+        Bucket: 'video-upload.in-coding.com',
+        Key: `${videoKey}/index.mp4`
     }).createReadStream();
     console.info(`영상 ${videoKey} 영상 길이 체크 시작`)
 
@@ -170,10 +162,6 @@ export const splitJob = async ({ bucket, videoKey }: SplitJobArgs) => {
         durations.push(Math.min(duration, 60 * 6))
         duration -= Math.min(duration, 60 * 6)
     }
-
-    // workingState.set(key, {
-    //     key, finished_count: 0, total_count: durations.length, durations
-    // })
 
     if(durations.length == 0) {
         console.error(`영상 ${videoKey} durations 개수가 0 이라 인코딩 중지`)
@@ -205,7 +193,7 @@ export const splitJob = async ({ bucket, videoKey }: SplitJobArgs) => {
         '#EXT-X-ENDLIST'
     ].join('\n') + '\n'
 
-    const m3u8Key = path.join(...videoKey.split('/').slice(0, -1), 'index.m3u8')
+    const m3u8Key = `videos/${videoKey}/index.m3u8`
     console.info(`m3u8 파일 생성 및 업로드 시작 ${m3u8Key}`)
     await s3.putObject({
         Bucket: bucket,
@@ -214,8 +202,6 @@ export const splitJob = async ({ bucket, videoKey }: SplitJobArgs) => {
         ContentType: 'application/x-mpegURL'
     }).promise()
     console.info(`m3u8 파일 생성 및 업로드 완료 ${m3u8Key}`)
-
-    // workingState.delete(key)
 }
 
 
